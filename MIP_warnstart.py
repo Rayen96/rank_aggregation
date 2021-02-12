@@ -6,6 +6,7 @@ import re
 import scipy.stats as ss
 import timeit
 import matplotlib.pyplot as plt
+from borda import borda
 
 pattern = '(\w)\[(\d+),(\d+)\]'
 
@@ -14,17 +15,22 @@ pattern = '(\w)\[(\d+),(\d+)\]'
 def MIP(data):
     
     n, m = data.shape
-
+    initial_aggregate = borda(data)
     better_than = np.zeros((n, n))
     equal_to = np.zeros((n, n))
+
+    initial_better_than = np.zeros((n, n))
+    initial_equal_to = np.zeros((n, n))
 
     for i in range(data.shape[0]):
         for j in range(data.shape[0]):
             if i != j:
                 better_than[i, j] = sum(data[i, k] < data[j, k] for k in range(
                     data.shape[1]) if data[i, k] is not None and data[j, k] is not None)
+                initial_better_than[i, j] = initial_aggregate[i] < initial_aggregate[j]
                 equal_to[i, j] = sum(data[i, k] == data[j, k] for k in range(
                     data.shape[1]) if data[i, k] is not None and data[j, k] is not None)
+                initial_equal_to[i, j] = initial_aggregate[i] == initial_aggregate[j]
 
     # Create a new model
     m = gp.Model("mip1")
@@ -32,6 +38,12 @@ def MIP(data):
     # Create variables
     x = m.addVars(n, n, vtype=GRB.BINARY, name="x")
     eq = m.addVars(n, n, vtype=GRB.BINARY, name="e")
+    
+    # Warm start
+    for i in range(n):
+        for j in range(n):
+            x[i, j].start = initial_better_than[i, j]
+            eq[i, j].start = initial_equal_to[i, j]
 
     # Set objective
     m.setObjective(gp.quicksum(x[i, j]*(better_than[j, i]+equal_to[j, i]) + x[j, i]*(better_than[i, j]+equal_to[i, j])+(better_than[i, j]+better_than[j, i])
@@ -95,8 +107,8 @@ rankings = rankings.to_numpy()
 print(rankings)
 
 results = pd.DataFrame()
-for i in range(5, 100):
-    for j in range(20):
+for i in range(60, 61):
+    for j in range(1):
         
         m = MIP(rankings[:i, :])
         print(i, m.runtime)

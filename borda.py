@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import scipy.stats as ss
-
+from kendall_helper import confirm_kemeny
 
 def rescale(rankings_arr):
     size = (~np.isnan(rankings_arr)).sum(axis=0)
@@ -46,8 +46,8 @@ def borda(rankings_arr, ties_treatment=1, normalization=1):
 
     if normalization == 1:
         ranking_totals = np.nansum(count, axis=0)
-        ranking_valids = (~np.isnan(count)).sum(axis=0)
-
+        ranking_valids = len(count)
+        np.nan_to_num(count, copy=False)
         max_score = max(ranking_totals)
         surplus = max_score - ranking_totals
         additional = surplus / ranking_valids
@@ -58,7 +58,7 @@ def borda(rankings_arr, ties_treatment=1, normalization=1):
         count = rescale(count)
 
 
-
+    print(count.sum(axis=0))
     score = np.nansum(count ,axis=1)
     print(score)
     return ss.rankdata(-score, method='min')
@@ -70,4 +70,7 @@ if __name__ == '__main__':
     print(rankings)
     rankings_arr = rankings.to_numpy()
     print(rankings_arr)
-    print(borda(rankings_arr))
+    agg = (borda(rankings_arr, normalization=0))
+    agg2 = (borda(rankings_arr, normalization=1))
+    print(confirm_kemeny(rankings_arr, agg))
+    print(confirm_kemeny(rankings_arr, agg2))
