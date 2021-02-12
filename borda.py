@@ -31,7 +31,7 @@ def rescale(rankings_arr):
         np.savetxt('test.csv', new, delimiter=',')
     return new
 
-def borda(rankings_arr, ties_treatment=1, normalization=2):
+def borda(rankings_arr, ties_treatment=1, normalization=1):
     row, col = rankings_arr.shape
     count = np.empty((row, col))
     count[:] = np.nan
