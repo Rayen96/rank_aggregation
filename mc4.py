@@ -10,8 +10,9 @@ def generate_transition_matrix(rankings):
     return ((ranked_higher / valid_ranked) >= 0.5).astype(int)
 
 
-def MC4(rankings_df):
-    rankings = rankings_df.to_numpy()
+def MC4(rankings_df, data_type='dataframe'):
+    if data_type == 'dataframe':
+        rankings = rankings_df.to_numpy()
 
     transition_matrix = generate_transition_matrix(rankings)
 
